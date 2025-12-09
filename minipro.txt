@@ -1,0 +1,77 @@
+## #################################################################   DEBUT   ##################################################################
+
+import pandas as pd
+import numpy as np
+from datetime import datetime
+import azfr_fsspec_utils as fspath
+import warnings
+
+warnings.filterwarnings('ignore')
+
+annee = 2025
+mois = 3
+
+##  DTM MidCorp  lu depuis AZURE
+
+DTM_MC = "abfs://data-bi-dt-abr@azfrdatalakeprod.dfs.core.windows.net/data/v2.0.0/202503/"  
+PTF_MC = pd.read_parquet(fspath.join(DTM_MC, "mc_ptf/mc_ptf.parquet"))
+MVT_MC = pd.read_parquet(fspath.join(DTM_MC, "mc_mvt/mc_mvt.parquet"))
+
+## DTM Flotte  lu depuis AZURE
+DTM_FL = "abfs://data-bi-dt-abr@azfrdatalakeprod.dfs.core.windows.net/data/v2.0.0/202503/" 
+MVT_FL = pd.read_parquet(fspath.join(DTM_FL, "fl_mvt/fl_mvt.parquet"))
+
+##DMTGARFL = "/sasprod/produits/SASEnterpriseBIServer/segrac/METGTECH/FLOTTES/202403/Expo" ## faire le transfere de la table sur AZUR pour lire ici
+##GAR_FL = "ptf_expo_flottes_gar_202403"
+
+##  LIENS IMS  lu depuis AZURE
+
+IMS = "abfs://data-ims@azfrdatalakeprod.dfs.core.windows.net/data/v1.0.0/20250311"
+PTF14 = pd.read_parquet(fspath.join(IMS, "INFP_IIA0P6_IPFE14_IPF/INFP_IIA0P6_IPFE14_IPF.parquet"))
+PTF34 = pd.read_parquet(fspath.join(IMS, "INFP_IIA0P6_IPFE34_IPF/INFP_IIA0P6_IPFE34_IPF.parquet"))
+PTF15 = pd.read_parquet(fspath.join(IMS, "INFP_IIA0P6_IPFE15_IPF/INFP_IIA0P6_IPFE15_IPF.parquet"))
+PTF35 = pd.read_parquet(fspath.join(IMS, "INFP_IIA0P6_IPFE35_IPF/INFP_IIA0P6_IPFE35_IPF.parquet"))
+PTF1M41 = pd.read_parquet(fspath.join(IMS, "INFP_IIA0P6_IPFE1M41_IPF/INFP_IIA0P6_IPFE1M41_IPF.parquet"))
+PTF3M41 = pd.read_parquet(fspath.join(IMS, "INFP_IIA0P6_IPFE3M41_IPF/INFP_IIA0P6_IPFE3M41_IPF.parquet"))
+PTF1MPI = pd.read_parquet(fspath.join(IMS, "INFP_IIA0P6_IPFE1MPI_IPF/INFP_IIA0P6_IPFE1MPI_IPF.parquet"))
+PTF3MPI = pd.read_parquet(fspath.join(IMS, "INFP_IIA0P6_IPFE3MPI_IPF/INFP_IIA0P6_IPFE3MPI_IPF.parquet"))
+
+# Spécifique au CDPROD */
+
+lien_SEGPROD = "abfs://data-bi-dt-abr@azfrdatalakeprod.dfs.core.windows.net/data/v2.0.0/202503/"  
+SEGPROD = pd.read_parquet(fspath.join(lien_SEGPROD, "rf_segprd/rf_segprd.parquet"))
+
+
+
+######  Referentiel des codes postaux  lu depuis AZURE  ###################
+
+POSTCD = "abfs://shared@azfrdatalab.dfs.core.windows.net/ABR/P4D/ADC/ETUDES/DataFitness/"
+
+CODE_POSTAL_LIST = pd.read_csv(fspath.join(POSTCD, "LISTE_CODE_POSTAUX_sas.csv"), sep = ";", decimal = ".", encoding ="latin9")  ## je dois revoir la liste de code postaux j'ai fait une erreur en supprimant 
+
+
+# In[2]:
+
+
+## JE CREE LE NEW DF LISTE CODE POSTAUX
+
+LISTE_CODE_POSTAUX = pd.DataFrame()
+LISTE_CODE_POSTAUX = CODE_POSTAL_LIST
+LISTE_CODE_POSTAUX["CODE_POSTAL"] =  CODE_POSTAL_LIST["F1_str"].apply(lambda x:"{:0>5}".format(x))
+
+#LISTE_CODE_POSTAUX
+
+
+# In[3]:
+
+
+## filter IMS pour le perimetre Pro MidCord
+def FILTRE_PTF(df):
+    return  (
+        (df['CDRI'] != 'X') &
+        (~df['NOINT'].isin(['H90061', '482001', '489090', '102030', 'H90036', 'H90059', 'H99045', 'H99059',
+                               '5B2000', '446000', '5R0001', '446118', '4F1004', '4A1400', '4A1500',
+                               '4A1600', '4A1700', '4A1800', '4A1900', '482001', '489090', '4L1010'])) &
+        (df['CDPROD'] != '01073') &
+        (df['CDNATP'].isin(['R', 'O', 'T']))
+    )
