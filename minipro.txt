@@ -75,3 +75,98 @@ def FILTRE_PTF(df):
         (df['CDPROD'] != '01073') &
         (df['CDNATP'].isin(['R', 'O', 'T']))
     )
+
+
+VAR_PTF_GAR = ["MTPRPR1", "MTPRPR2", "MTPRPR3", "MTPRPR4", "MTPRPR5", "MTPRPR6", "MTPRPR7", "MTPRPR8", "MTPRPR9", "MTPRPR10",
+  "MTPRPR11", "MTPRPR12", "MTPRPR13", "MTPRPR14", "MTPRPR15", "MTPRPR16", "MTPRPR17", "MTPRPR18", "MTPRPR19", "MTPRPR20",
+  "MTPRPR21", "MTPRPR22", "MTPRPR23", "MTPRPR24", "MTPRPR25", "MTPRPR26", "MTPRPR27", "MTPRPR28",
+  "LBGAR1", "LBGAR2", "LBGAR3", "LBGAR4", "LBGAR5", "LBGAR6", "LBGAR7", "LBGAR8", "LBGAR9", "LBGAR10",
+  "LBGAR11", "LBGAR12", "LBGAR13", "LBGAR14", "LBGAR15", "LBGAR16", "LBGAR17", "LBGAR18", "LBGAR19", "LBGAR20",
+  "LBGAR21", "LBGAR22", "LBGAR23", "LBGAR24", "LBGAR25", "LBGAR26", "LBGAR27", "LBGAR28"]
+
+
+# In[5]:
+
+
+###################      Implémentation des macros       ####################################
+
+#################   /** MACRO POUR LA COMPLETENESS **/       #########################
+##  FAITES PLACE A LA VARIABLE pre = PRESENT ET ABS = ABSENT, la variable pre qui represente le nombre d'enregistrement non vide
+
+REFMIDCORP = {
+    'CDPOLE' : 'SE-BG-264',
+    'CDPROD' : 'SE-BG-534',
+    'CDSITP': 'SE-BG-517',
+    'COUNT_POLICY_CANCELLED' : 'SE-BG-1283',
+    'DTEFSITT' : 'SE-BG-220',
+    'DTCREPOL' : 'SE-BG-509',
+    'DTEXPIR' : 'SE-BG-219',
+    'DTTREVEN' : 'SE-BG-518',
+    'DTRESILP' : 'SE-BG-497',
+    'NOCLT' : 'SE-BG-901',
+    'NOINT' : 'SE-BG-1270',
+    'NOPOL' : 'SE-BG-508',
+    'PCRABCOM' : 'SE-BG-455',
+    'POSRISQ' : 'SE-BG-48',
+    'LCI_100_IND' : 'SE-BG-380',
+    'SMP_100_IND' : 'SE-BG-591',
+    'PRIMES_PTF': 'SE-BG-467',
+    'PRIMES_PTF_0': 'SE-BG-467',
+    'PRIMES_PTF_MAX': 'SE-BG-467',
+    'PRIMES_PTF_MIN': 'SE-BG-467',
+    'SITU_POL': 'SE-BG-517',
+    'CCC': 'SE-BG-381'
+}
+
+REFFLOTTE = {
+    'DTCREPOL' : 'SE-BG-509',
+    'CDPOLE' : 'SE-BG-264',
+    'DIRCOM' : 'SE-BG-264',
+    'DTRESILP' : 'SE-BG-497',
+    'NOCLT' : 'SE-BG-901',
+    'NOINT' : 'SE-BG-1270',
+    'DTTREVEN' : 'SE-BG-518',
+    'NOPOL' : 'SE-BG-508',
+    'SITU_POL': 'SE-BG-517',
+    'TYPE': 'SE-BG-534',
+    'CCC': 'SE-BG-381',
+    'POSRISQ': 'SE-BG-48'
+}
+
+def COMPLETENESS(x, y):
+    count = f'COMP_{y}'
+    # count = f'{Reference[y]}_COMP'
+    x[count] = np.where(pd.isna(x[y]) | (x[y] == ""), 0, 1)
+
+    #return x
+
+
+#######  la variable TECH_VAL_FORMAT_VAR = 1 si le longueur est respecté, si non = 0   ################### 
+
+# ON VEUT QUE DES ELEMENTS ALPHA-NUMERIQUE
+def TECH_VAL_FORMAT_VAR(x, y):
+    count = f'COMP_{y}'
+    x[f'FORMAT_{y}'] = np.where((x[count] == 1) & (x[y].apply(lambda t: str(t).replace(' ', '').isalnum())), 1, 0)
+
+
+   # print(x[f'FORMAT_{y}'])
+
+
+#########   MACRO POUR LA TECHNICAL VALIDITY POUR LA LONGUEUR  ########################### 
+
+#######  la variable TECH_VAL_LENGTH_VAR = 1 si le longueur est respecté, si non = 0   ################### 
+
+length_val = {
+    'NOPOL': 8,
+    'NOCLT': 12,
+    'NOINT': 6,
+}
+
+def TECH_VALIDITY_LENGTH (x, y):
+
+    count = f'COMP_{y}'
+    if y in length_val:
+        x[f'LENGTH_{y}'] = np.where((x[count] == 1) & (x[y].apply(lambda t: len(str(t))) == length_val[y]), 1, 0)
+    else:
+        return None
+    #print(x[f'LENGTH_{y}'])
