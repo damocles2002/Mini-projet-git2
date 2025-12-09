@@ -170,3 +170,55 @@ def TECH_VALIDITY_LENGTH (x, y):
     else:
         return None
     #print(x[f'LENGTH_{y}'])
+
+#######################################   MACRO POUR LES BUSINESS VALIDY     #################################################
+
+def BUSINESS_VALIDY (x, y):
+
+    ###########   MIDCORP   #########################
+    if (y == "CDSITP"):
+        control = x[y].isin(['1', '2', '3', '4', '5', '6'])
+    elif (y == "DTEFSITT"):
+        control = (x[y] <= x["DTEXPIR"]) | (pd.notna(x[y]) & pd.isna(x["DTEXPIR"]))
+    elif (y == "DTEXPIR"):
+        control = (x["DTEFSITT"] <= x[y]) | (pd.notna(x["DTEFSITT"]) & pd.isna(x[y]))
+    elif (y == "DTTREVEN"):
+        control = (((x[y] >= x["DTEFSITT"]) & (x[y] <= x["DTEXPIR"])) | ((x[y] >= x["DTEFSITT"]) & (pd.isna(x["DTEXPIR"]))))
+    elif (y == "DTRESILP"):
+        control = (x[y] >= x["DTEFSITT"])
+    elif (y == "DTCREPOL"):
+        control = x[y] <= x["DTEFSITT"]
+    elif (y in ["LCI_100", "LCI_100_IND", "SMP_100", "SMP_100_IND"]):
+        control = x[y] > 0
+    elif (y == "PCRABCOM"):
+        control = x[y] >= 0
+    elif (y == "CDPOLE"): # même condition dans le périmetre FLOTTE.
+        control = x[y].isin(['1', '3', '9'])
+
+    ##################  FLOTTE  ##########################################
+    elif (y == "SITU_POL"):
+        control = x[y].isin(["ANTICIPEE","EN COURS","EXPIREE","RESILIEE","SUSPENDUE"])
+    elif (y == "CMARCH"):
+        control = x[y].isin(['1', '2', '3', '4', '5', '6', '7'])
+    elif (y == "CSEG"):
+        control = x[y].isin(['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'])
+    elif (y == "CSSSEG"):
+        control = x[y].isin(['4', '6', '5', '3', '2', '7', '1', '8', '9'])
+
+    count = f'COMP_{y}'
+    x[f'BUS_VAL_{y}'] = np.where((x[count] == 1) & control, 1, 0)
+
+    #print(x[f'BUS_VAL_{y}'])
+
+
+# In[6]:
+
+
+def calculate_percentage_difference(df):
+    percentage_differences = pd.DataFrame()
+    for col in diff.columns.levels[0]:  # Iterate over main columns
+        self_col = diff[col]['self']
+        other_col = diff[col]['other']
+        percentage_diff = ((other_col - self_col) / other_col) * 100
+        percentage_differences[(col, 'percentage_difference')] = percentage_diff
+    return percentage_differences
